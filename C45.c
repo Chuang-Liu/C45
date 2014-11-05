@@ -7,19 +7,22 @@ const int TOTALYES = 9;
 double info(int, int);
 double infoa(int);
 double splitinfoa(int);
+double gainratio(int);
 void count(int);
 void split(int);
 
 int outlook[14] = {'s','s','o','r','r','r','o','s','s','r','s','o','o','r'};
-int temperature[14] = {85,80,83,70,68,65,64,72,69.75,75,72,81,71};
+int temperature[14] = {85,80,83,70,68,65,64,72,69,75,75,72,81,71};
 int humidity[14] = {85,90,83,96,80,70,65,95,70,80,70,90,81,91};
 int windy[14] = {'f','t','f','f','f','t','t','f','f','f','t','t','f','t'};
 int ans[14] = {0,0,1,1,1,0,1,0,1,1,1,1,1,0};
-int attribute[4][14] = {{'s','s','o','r','r','r','o','s','s','r','s','o','o','r'},
-                        {85,80,83,70,68,65,64,72,69.75,75,72,81,71},
+int attribute[5][14] = {{'s','s','o','r','r','r','o','s','s','r','s','o','o','r'},
+                        {85,80,83,70,68,65,64,72,69,75,75,72,81,71},
                         {85,90,83,96,80,70,65,95,70,80,70,90,81,91},
+                        {0,1,0,0,0,1,1,0,0,0,1,1,0,1},
                         {0,0,1,1,1,0,1,0,1,1,1,1,1,0}};
 int totalclass[4];
+double infod;
 
 struct dataset
 {
@@ -30,6 +33,7 @@ struct dataset
 int main()
 {
 	int i,j;
+	infod = info(TOTALYES, TOTAL - TOTALYES);
 
     totalclass[0] = 3;
 	d[0][0].cardinality = 4;d[0][0].positive = 2;
@@ -53,7 +57,7 @@ int main()
 
     for (i=0;i<4;i++,putchar('\n'))
     {
-        printf("%f",infoa(i));
+        printf("%f",gainratio(i));
     }
 	return 0;
 }
@@ -90,8 +94,16 @@ double splitinfoa(int no)
     for (i=0;i<totalclass[no];i++)
     {
         ret -= log((double)d[no][i].cardinality/TOTAL) / log(2) * d[no][i].cardinality / TOTAL;
-        printf("%f ",ret);
+        //printf("%f ",ret);
     }
+    return ret;
+}
+
+double gainratio(int no)
+{
+    double ret = infod;
+    ret -= infoa(no);
+    ret /= splitinfoa(no);
     return ret;
 }
 
@@ -103,7 +115,7 @@ void count(int no)
 	totalclass[no] = 1;
 	classpattern[0] = attribute[no][0];
 	d[no][0].cardinality = 1;
-	d[no][0].positive = (ans[0]?1:0);
+	d[no][0].positive = (attribute[no][0]?1:0);
 	for (i=1;i<TOTAL;i++)
 	{
 		for (j=0;j<totalclass[no];j++)
@@ -111,7 +123,7 @@ void count(int no)
 			if (classpattern[j] == attribute[no][i])
 			{
 				d[no][j].cardinality += 1;
-				if (ans[i]) d[no][j].positive += 1;
+				if (attribute[no][i]) d[no][j].positive += 1;
 				break;
 			}
 		}
@@ -119,7 +131,7 @@ void count(int no)
 		{
 			classpattern[j] = attribute[no][i];
 			d[no][j].cardinality = 1;
-			d[no][j].positive = ans[i]?1:0;
+			d[no][j].positive = attribute[no][i]?1:0;
 			totalclass[no] += 1;
 		}
 	}
@@ -127,9 +139,10 @@ void count(int no)
 
 void split(int no)
 {
-    int i,j;
+    int i,j,k;
     int t;
     int yescount = 0;
+    int minyescount, mini;
     double temp,min;
     for (i=0;i<TOTAL;i++)
     {
@@ -137,26 +150,42 @@ void split(int no)
         {
             if (attribute[no][i]>attribute[no][j])
             {
-                t = attribute[no][i];
-                attribute[no][i] = attribute[no][j];
-                attribute[no][j] = t;
+                for (k=0; k<4; k++)
+                {
+                    t = attribute[k][i];
+                    attribute[k][i] = attribute[k][j];
+                    attribute[k][j] = t;
+                }
             }
         }
     }
-
-    min = 100000;
     for (i=0;i<TOTAL;i++)
     {
-        if (ans[i]) yescount += 1;
-        temp = info(yescount, i-yescount) * i / TOTAL + info(TOTALYES - yescount, TOTAL - i -TOTALYES + yescount);
+        printf("%d ",attribute[no][i]);
+    }
+    putchar('\n');
+
+    min = 100000;
+    totalclass[no] = 2;
+    for (i=0;i<(TOTAL -1 );i++)
+    {
+        if (attribute[4][i]) yescount += 1;
+        d[no][0].cardinality = i;
+        d[no][0].positive = yescount;
+        d[no][1].cardinality = TOTAL - i;
+        d[no][1].positive = TOTALYES - yescount;
+        temp = infoa(no);
         if (temp < min)
         {
-            d[no][0].cardinality = i;
-            d[no][0].positive = yescount;
-            d[no][1].cardinality = TOTAL - i;
-            d[no][1].positive = TOTALYES - yescount;
+            min = temp;
+            mini = i;
+            minyescount = yescount;
         }
     }
+    d[no][0].cardinality = mini;
+    d[no][0].positive = minyescount;
+    d[no][1].cardinality = TOTAL - mini;
+    d[no][1].positive = TOTALYES - minyescount;
 
-    totalclass[no] = 2;
+    printf("split:%d\n",mini);
 }
