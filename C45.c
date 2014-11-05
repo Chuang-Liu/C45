@@ -6,6 +6,7 @@ const int TOTALYES = 9;
 
 double info(int, int);
 double infoa(int);
+double splitinfoa(int);
 void count(int);
 void split(int);
 
@@ -29,6 +30,13 @@ struct dataset
 int main()
 {
 	int i,j;
+
+    totalclass[0] = 3;
+	d[0][0].cardinality = 4;d[0][0].positive = 2;
+	d[0][1].cardinality = 6;d[0][1].positive = 4;
+	d[0][2].cardinality = 4;d[0][2].positive = 3;
+	printf("%f\n",splitinfoa(0));
+
 	count(0);
 	split(1);
 	split(2);
@@ -45,7 +53,7 @@ int main()
 
     for (i=0;i<4;i++,putchar('\n'))
     {
-        printf("%f",infoa(i,totalclass[i]));
+        printf("%f",infoa(i));
     }
 	return 0;
 }
@@ -81,8 +89,10 @@ double splitinfoa(int no)
 
     for (i=0;i<totalclass[no];i++)
     {
-        ret -= log(d[no][i].cardinality) / log(2) * d[no][i].cardinality / TOTAL
+        ret -= log((double)d[no][i].cardinality/TOTAL) / log(2) * d[no][i].cardinality / TOTAL;
+        printf("%f ",ret);
     }
+    return ret;
 }
 
 void count(int no)
