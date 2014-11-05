@@ -35,12 +35,6 @@ int main()
 	int i,j;
 	infod = info(TOTALYES, TOTAL - TOTALYES);
 
-    totalclass[0] = 3;
-	d[0][0].cardinality = 4;d[0][0].positive = 2;
-	d[0][1].cardinality = 6;d[0][1].positive = 4;
-	d[0][2].cardinality = 4;d[0][2].positive = 3;
-	printf("%f\n",splitinfoa(0));
-
 	count(0);
 	split(1);
 	split(2);
@@ -150,7 +144,7 @@ void split(int no)
         {
             if (attribute[no][i]>attribute[no][j])
             {
-                for (k=0; k<4; k++)
+                for (k=0; k<5; k++)
                 {
                     t = attribute[k][i];
                     attribute[k][i] = attribute[k][j];
@@ -159,9 +153,9 @@ void split(int no)
             }
         }
     }
-    for (i=0;i<TOTAL;i++)
+    for (i=0;i<14;i++)
     {
-        printf("%d ",attribute[no][i]);
+        printf("%d:%d    ",attribute[no][i],attribute[4][i]);
     }
     putchar('\n');
 
@@ -181,6 +175,7 @@ void split(int no)
             mini = i;
             minyescount = yescount;
         }
+        printf("%f\n",temp);
     }
     d[no][0].cardinality = mini;
     d[no][0].positive = minyescount;
