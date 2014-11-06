@@ -4,13 +4,20 @@
 const int TOTAL = 14;
 const int TOTALYES = 9;
 
-void C45(int, int);
+struct attributeclass
+{
+    int pattern;
+    int cardinality;
+    int positive;
+};
+
+void C45(int, int[], int, int);
 double info(int, int);
-double infoa(int);
-double splitinfoa(int, int);
+double infoa(int, struct attributeclass [14], int);
+double splitinfoa(int);
 double gainratio(int);
-void count(int);
-void split(int);
+void count(struct attributeclass[4][14], int);
+void split(struct attributeclass[4][14], int, int, int);
 
 int outlook[14] = {'s','s','o','r','r','r','o','s','s','r','s','o','o','r'};
 int temperature[14] = {85,80,83,70,68,65,64,72,69,75,75,72,81,71};
@@ -22,30 +29,34 @@ int attribute[5][14] = {{'s','s','o','r','r','r','o','s','s','r','s','o','o','r'
                         {85,90,83,96,80,70,65,95,70,80,70,90,81,91},
                         {0,1,0,0,0,1,1,0,0,0,1,1,0,1},
                         {0,0,1,1,1,0,1,0,1,1,1,1,1,0}};
+int next[14];
 int totalclass[4];
 short ruleused[4];
 
-struct dataset
-{
-    int value;
-    int cardinality;
-    int positive;
-};
+
 
 int main()
 {
 	int i,j;
 
-	count(0);
-	split(1);
-	split(2);
-	count(3);
-	for (i=0;i<4;i++) ruleused[i]=0;
+	for (i=0;i<13;i++) next[i]=i+1;
+	next[13]=-1;
+	struct attributeclass ac[4][14];
+	count(ac,0);
+	split(ac,0,TOTAL,TOTALYES);
+	for (i=0;i<4;i++)
+	{
+	    for (j=0;j<totalclass[i];j=j++)
+	    {
+	        printf("%d %d\n",ac[i][j].cardinality, ac[i][j].positive);
+	    }
+	    putchar('\n');
+	}
 
-    for (i=0;i<4;i++,putchar('\n'))
-    {
-        printf("%f",gainratio(i));
-    }
+	for (i=0;i<4;i++)
+	{
+	    printf("%f\n",infoa(totalclass[i],ac[i],TOTAL));
+	}
 	return 0;
 }
 
@@ -61,14 +72,15 @@ double info(int a,int b)
 	return ret;
 }
 
-double infoa(int no)
+double infoa(int classcount, struct attributeclass ac[14],int dcardinality)
 {
     int i;
     double ret=0;
-    for (i=0; i<totalclass[no];i++)
+    for (i=0; i<classcount;i++)
     {
-        ret += info(d[no][i].positive, d[no][i].cardinality) * d[no][i].cardinality / totalclass[no];
+        ret+=info(ac[i].positive,ac[i].cardinality-ac[i].positive) * ac[i].cardinality;
     }
+    ret /= (double)dcardinality;
     return ret;
 }
 
@@ -79,7 +91,7 @@ double splitinfoa(int no)
 
     for (i=0;i<totalclass[no];i++)
     {
-        ret -= log((double)d[no][i].cardinality/TOTAL) / log(2) * d[no][i].cardinality / TOTAL;
+        //ret -= log((double)d[no][i].cardinality/TOTAL) / log(2) * d[no][i].cardinality / TOTAL;
         //printf("%f ",ret);
     }
     return ret;
@@ -87,127 +99,139 @@ double splitinfoa(int no)
 
 double gainratio(int no)
 {
-    double ret = infod;
-    ret -= infoa(no);
+    double ret;
+    //ret -= infoa(no);
     ret /= splitinfoa(no);
     return ret;
 }
 
-void C45(int rule,int head[],int dcardinality, int positivecount)
+void C45(int head,int dcardinality, int positivecount)
 {
     int i,j,p,gainmax;
     int h[14];
     double infod=info(positivecount, dcardinality-positivecount);
-    struct dataset d[4][14];
+    struct attributeclass d[4][14];
 
     //calculate gain and find gainmax = attribute no.
-
     for (i=0;i<4;i++)
     {
         if (ruleused[i]) continue;
 
-        infoa(i);
     }
 
 
     for (i=0; i<totalclass[gainmax]; i++)
     {
         p=0;
-        for (j=0; head[j]!=-1; j++)
+        for (j=0; head[j]!=-1; j=next[j])
         {
-            if (attribute[gainmax][head[j]]==d[gainmax][i].value)
+            if (attribute[gainmax][head[j]]==d[gainmax][i].pattern)
             {
                 h[p]=j;
                 p+=1;
             }
         }
         h[p]=-1;
+        for (j=0;j<)
 
-
-        C45(gainmax, h);
+        ruleused[gainmax]=1;
+        C45(h[0]);
+        ruleused[gainmax]=0;
     }
 }
 
-void count(int no, struct dataset d[])
+void count(struct attributeclass ac[4][14], int head)
 {
-	int i,j;
-	int classpattern[14];
+	int i,j,k;
 
-	totalclass[no] = 1;
-	classpattern[0] = attribute[no][0];
-	d[0].cardinality = 1;
-	d[0].positive = (attribute[no][0]?1:0);
-	for (i=1;i<TOTAL;i++)
+	for (i=0;i<4;i++)
 	{
-		for (j=0;j<totalclass[no];j++)
-		{
-			if (classpattern[j] == attribute[no][i])
-			{
-				d[no][j].cardinality += 1;
-				if (attribute[no][i]) d[j].positive += 1;
-				break;
-			}
-		}
-		if (j == totalclass[no])
-		{
-			classpattern[j] = attribute[no][i];
-			d[j].cardinality = 1;
-			d[j].positive = attribute[no][i]?1:0;
-			totalclass[no] += 1;
-		}
+	    if (ruleused[i]) continue;
+	    totalclass[i]=1;
+        ac[i][0].pattern = attribute[i][0];
+        ac[i][0].cardinality = 1;
+        ac[i][0].positive = attribute[4][0];
+	    for (j=next[head];j!=-1;j=next[j])
+	    {
+	        for (k=0;k<totalclass[i];k++)
+	        {
+	            if (ac[i][k].pattern == attribute[i][j])
+	            {
+	                ac[i][k].cardinality+=1;
+	                if (attribute[4][j]) ac[i][k].positive+=1;
+	                break;
+	            }
+	        }
+	        if (k == totalclass[i])
+	        {
+	            ac[i][k].pattern = attribute[i][j];
+	            totalclass[i]+=1;
+	            ac[i][k].cardinality=1;
+	            ac[i][k].positive=attribute[4][j];
+	        }
+	    }
 	}
 }
 
-void split(int no)
+void split(struct attributeclass d[4][14], int head, int total, int positivecount)
 {
     int i,j,k;
     int t;
-    int yescount = 0;
+    int a[14];
     int minyescount, mini;
     double temp,min;
-    for (i=0;i<TOTAL;i++)
+    struct attributeclass tt;
+
+
+    for (i=1;i<3;i++)
     {
-        for (j=i+1;j<TOTAL;j++)
+
+        for (j=head;j!=-1;j=next[j])
         {
-            if (attribute[no][i]>attribute[no][j])
+            a[j]=j;
+        }
+
+        /*------------sort------------------------------------------------*/
+        for (j=0;j<total;j++)
+        {
+            for (k=j+1;k<total;k++)
             {
-                for (k=0; k<5; k++)
+                if (attribute[i][a[j]]>attribute[i][a[k]])
                 {
-                    t = attribute[k][i];
-                    attribute[k][i] = attribute[k][j];
-                    attribute[k][j] = t;
+                    t=a[j];
+                    a[j]=a[k];
+                    a[k]=t;
                 }
             }
         }
-    }
-    for (i=0;i<14;i++)
-    {
-        printf("%d:%d    ",attribute[no][i],attribute[4][i]);
-    }
-    putchar('\n');
+        /*-----------------------------------------------------------------------*/
 
-    min = 100000;
-    totalclass[no] = 2;
-    for (i=0;i<(TOTAL -1 );i++)
-    {
-        if (attribute[4][i]) yescount += 1;
-        d[no][0].cardinality = i;
-        d[no][0].positive = yescount;
-        d[no][1].cardinality = TOTAL - i;
-        d[no][1].positive = TOTALYES - yescount;
-        temp = infoa(no);
-        if (temp < min)
+        d[i][0].cardinality=0;
+        d[i][1].cardinality=total;
+        d[i][0].positive=0;
+        d[i][1].positive=positivecount;
+        min=10000;
+        totalclass[i]=2;
+        for (j=0;j<total;j++)
         {
-            min = temp;
-            mini = i;
-            minyescount = yescount;
+            d[i][0].cardinality+=1;
+            d[i][1].cardinality-=1;
+            if (attribute[4][a[j]])
+            {
+                d[i][0].positive+=1;
+                d[i][1].positive-=1;
+            }
+            temp=infoa(2, d[i], total);
+            if (temp<min)
+            {
+                tt.cardinality=d[i][0].cardinality;
+                tt.positive=d[i][0].positive;
+                min=temp;
+            }
         }
-        printf("%f\n",temp);
+        d[i][0].cardinality=tt.cardinality;
+        d[i][0].positive=tt.positive;
+        d[i][1].cardinality=total-tt.cardinality;
+        d[i][1].positive=positivecount-tt.positive;
     }
-    d[no][0].cardinality = mini;
-    d[no][0].positive = minyescount;
-    d[no][1].cardinality = TOTAL - mini;
-    d[no][1].positive = TOTALYES - minyescount;
-
-    printf("split:%d\n",mini);
 }
