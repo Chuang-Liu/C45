@@ -4,9 +4,10 @@
 const int TOTAL = 14;
 const int TOTALYES = 9;
 
+void C45(int, int);
 double info(int, int);
 double infoa(int);
-double splitinfoa(int);
+double splitinfoa(int, int);
 double gainratio(int);
 void count(int);
 void split(int);
@@ -22,32 +23,24 @@ int attribute[5][14] = {{'s','s','o','r','r','r','o','s','s','r','s','o','o','r'
                         {0,1,0,0,0,1,1,0,0,0,1,1,0,1},
                         {0,0,1,1,1,0,1,0,1,1,1,1,1,0}};
 int totalclass[4];
-double infod;
+short ruleused[4];
 
 struct dataset
 {
+    int value;
     int cardinality;
     int positive;
-}d[4][14];
+};
 
 int main()
 {
 	int i,j;
-	infod = info(TOTALYES, TOTAL - TOTALYES);
 
 	count(0);
 	split(1);
 	split(2);
 	count(3);
-	for (i=0;i<4;i++)
-    {
-        printf("%d\n",totalclass[i]);
-        for (j=0;j<totalclass[i];j++)
-        {
-            printf("%d %d\n",d[i][j].cardinality, d[i][j].positive);
-        }
-        printf("\n");
-    }
+	for (i=0;i<4;i++) ruleused[i]=0;
 
     for (i=0;i<4;i++,putchar('\n'))
     {
@@ -71,11 +64,10 @@ double info(int a,int b)
 double infoa(int no)
 {
     int i;
-    double ret = 0;
-    for (i=0;i<totalclass[no];i++)
+    double ret=0;
+    for (i=0; i<totalclass[no];i++)
     {
-        ret += info(d[no][i].positive, d[no][i].cardinality-d[no][i].positive) * d[no][i].cardinality / TOTAL;
-        //printf("%d:%f\n",i,ret);
+        ret += info(d[no][i].positive, d[no][i].cardinality) * d[no][i].cardinality / totalclass[no];
     }
     return ret;
 }
@@ -101,15 +93,50 @@ double gainratio(int no)
     return ret;
 }
 
-void count(int no)
+void C45(int rule,int head[],int dcardinality, int positivecount)
+{
+    int i,j,p,gainmax;
+    int h[14];
+    double infod=info(positivecount, dcardinality-positivecount);
+    struct dataset d[4][14];
+
+    //calculate gain and find gainmax = attribute no.
+
+    for (i=0;i<4;i++)
+    {
+        if (ruleused[i]) continue;
+
+        infoa(i);
+    }
+
+
+    for (i=0; i<totalclass[gainmax]; i++)
+    {
+        p=0;
+        for (j=0; head[j]!=-1; j++)
+        {
+            if (attribute[gainmax][head[j]]==d[gainmax][i].value)
+            {
+                h[p]=j;
+                p+=1;
+            }
+        }
+        h[p]=-1;
+
+
+        C45(gainmax, h);
+    }
+}
+
+void count(int no, struct dataset d[])
 {
 	int i,j;
 	int classpattern[14];
 
 	totalclass[no] = 1;
 	classpattern[0] = attribute[no][0];
-	d[no][0].cardinality = 1;
-	d[no][0].positive = (attribute[no][0]?1:0);
+	d[0].cardinality = 1;
+	d[0].positive = (attribute[no][0]?1:0);
 	for (i=1;i<TOTAL;i++)
 	{
 		for (j=0;j<totalclass[no];j++)
@@ -117,15 +144,15 @@ void count(int no)
 			if (classpattern[j] == attribute[no][i])
 			{
 				d[no][j].cardinality += 1;
-				if (attribute[no][i]) d[no][j].positive += 1;
+				if (attribute[no][i]) d[j].positive += 1;
 				break;
 			}
 		}
 		if (j == totalclass[no])
 		{
 			classpattern[j] = attribute[no][i];
-			d[no][j].cardinality = 1;
-			d[no][j].positive = attribute[no][i]?1:0;
+			d[j].cardinality = 1;
+			d[j].positive = attribute[no][i]?1:0;
 			totalclass[no] += 1;
 		}
 	}
